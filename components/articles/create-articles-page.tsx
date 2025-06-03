@@ -1,92 +1,71 @@
 "use client";
-import React, { FormEvent, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import { Label } from "../ui/label";
-import { Input } from "../ui/input";
-import dynamic from "next/dynamic";
-import { Button } from "../ui/button";
-import { useRouter } from "next/navigation";
+import { FormEvent, startTransition, useActionState, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import "react-quill-new/dist/quill.snow.css";
-
+import dynamic from "next/dynamic";
+import { createArticles } from "@/actions/create-articles";
 const ReactQuill = dynamic(() => import("react-quill-new"), { ssr: false });
-
-const CreateArticlesPage = () => {
+ 
+export default function CreateArticlePage() {
   const [content, setContent] = useState("");
-  const [formErrors, setFormErrors] = useState<{ [key: string]: string[] }>({});
-  const [isPending, setIsPending] = useState(false);
-  const router = useRouter();
 
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setIsPending(true);
-    setFormErrors({});
+  const [formState, action, isPending] = useActionState(createArticles, {
+    errors: {},
+  });
+ 
 
-    const formData = new FormData(e.currentTarget);
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    const formData = new FormData(event.currentTarget);
     formData.append("content", content);
 
-    try {
-      const res = await fetch("/api/articles", {
-        method: "POST",
-        body: formData,
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        setFormErrors(data.errors || { formErrors: [data.error || "Unknown error occurred"] });
-      } else {
-
-        router.push("/dashboard");
-      }
-    } catch (err: any) {
-      setFormErrors({ formErrors: [err.message || "Submission failed"] });
-    } finally {
-      setIsPending(false);
-    }
+    // Wrap the action call in startTransition
+    startTransition(() => {
+      action(formData);
+    });
   };
-
+ 
   return (
     <div className="max-w-4xl mx-auto p-6">
       <Card>
         <CardHeader>
-          <CardTitle>Create New Article</CardTitle>
+          <CardTitle className="text-2xl">Create New Article</CardTitle>
         </CardHeader>
         <CardContent>
-          {formErrors.formErrors && (
-            <div className="text-red-600 text-sm mb-4">
-              {formErrors.formErrors[0]}
-            </div>
-          )}
-
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
+              <Label htmlFor="title">Article Title</Label>
               <Input
-                type="text"
+                id="title"
                 name="title"
-                placeholder="Enter the article title"
+                placeholder="Enter article title"
               />
-              {formErrors.title && (
-                <span className="text-red-600 text-sm">
-                  {formErrors.title[0]}
+              {formState.errors.title && (
+                <span className="font-medium text-sm text-red-500">
+                  {formState.errors.title}
                 </span>
               )}
             </div>
 
             <div className="space-y-2">
-              <Label>Category</Label>
+              <Label htmlFor="category">Category</Label>
               <select
-                name="category"
                 id="category"
-                className="flex h-10 w-full rounded-md"
+                name="category"
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               >
-                <option value="">Select category</option>
+                <option value="">Select Category</option>
                 <option value="technology">Technology</option>
-                <option value="fashion">Fashion</option>
-                <option value="entertainment">Entertainment</option>
+                <option value="programming">Programming</option>
+                <option value="web-development">Web Development</option>
               </select>
-              {formErrors.category && (
-                <span className="text-red-600 text-sm">
-                  {formErrors.category[0]}
+              {formState.errors.category && (
+                <span className="font-medium text-sm text-red-500">
+                  {formState.errors.category}
                 </span>
               )}
             </div>
@@ -94,33 +73,43 @@ const CreateArticlesPage = () => {
             <div className="space-y-2">
               <Label htmlFor="featuredImage">Featured Image</Label>
               <Input
-                type="file"
                 id="featuredImage"
                 name="featuredImage"
+                type="file"
                 accept="image/*"
               />
-              {formErrors.featuredImage && (
-                <span className="text-red-600 text-sm">
-                  {formErrors.featuredImage[0]}
+              {formState.errors.featuredImage && (
+                <span className="font-medium text-sm text-red-500">
+                  {formState.errors.featuredImage}
                 </span>
               )}
             </div>
 
             <div className="space-y-2">
               <Label>Content</Label>
-              <ReactQuill theme="snow" value={content} onChange={setContent} />
-              {formErrors.content && (
-                <span className="text-red-600 text-sm">
-                  {formErrors.content[0]}
+              <ReactQuill
+                theme="snow"
+                value={content}
+                onChange={setContent} 
+              />
+              {formState.errors.content && (
+                <span className="font-medium text-sm text-red-500">
+                  {formState.errors.content[0]}
                 </span>
               )}
             </div>
-
+            {formState.errors.formErrors && (
+              <div className="dark:bg-transparent bg-red-100 p-2 border border-red-600">
+                <span className="font-medium text-sm text-red-500">
+                  {formState.errors.formErrors}
+                </span>
+              </div>
+            )}
             <div className="flex justify-end gap-4">
-              <Button type="button" variant={"outline"} disabled={isPending}>
+              <Button type="button" variant="outline">
                 Cancel
               </Button>
-              <Button type="submit" disabled={isPending}>
+              <Button disabled={isPending} type="submit">
                 {isPending ? "Loading..." : "Publish Article"}
               </Button>
             </div>
@@ -129,6 +118,4 @@ const CreateArticlesPage = () => {
       </Card>
     </div>
   );
-};
-
-export default CreateArticlesPage;
+}

@@ -35,10 +35,10 @@ const Navbar = () => {
             </Link>
 
             <Link
-              href={"/About"}
+              href={"/articles"}
               className="text-sm font-medium text-foreground transition-colors hover:text-foreground"
             >
-              About
+              Articles
             </Link>
 
             <Link

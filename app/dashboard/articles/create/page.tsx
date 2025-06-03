@@ -1,10 +1,10 @@
-import CreateArticlesPage from '@/components/articles/create-articles-page'
-import React from 'react'
+import CreateArticlePage from "@/components/articles/create-articles-page"
+
 
 const page = () => {
   return (
     <div>
-        <CreateArticlesPage/>
+        <CreateArticlePage />
     </div>
   )
 }
