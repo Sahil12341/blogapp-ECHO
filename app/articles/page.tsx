@@ -1,4 +1,3 @@
-
 import {
   AllArticlesPage, 
 } from "@/components/articles/all-articles-page";
@@ -11,13 +10,14 @@ import { fetchArticleByQuery } from "@/lib/query/fetch-articles";
 import Link from "next/link";
 
 type SearchPageProps = {
-  searchParams: { search?: string; page?: string };
+  searchParams?: Record<string, string | string[] | undefined>;
 };
 
 const ITEMS_PER_PAGE = 3; // Number of items per page
 
-const page: React.FC<SearchPageProps> = async ({ searchParams }) => {
-  const searchText = searchParams.search || "";
+const page: React.FC<SearchPageProps> = async ({ searchParams = {} }) => {
+  const rawSearch = searchParams.search;
+  const searchText = Array.isArray(rawSearch) ? rawSearch[0] ?? "" : rawSearch ?? "";
   const currentPage = Number(searchParams.page) || 1;
   const skip = (currentPage - 1) * ITEMS_PER_PAGE;
   const take = ITEMS_PER_PAGE;
