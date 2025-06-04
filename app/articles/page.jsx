@@ -12,7 +12,7 @@ import Link from "next/link";
 const ITEMS_PER_PAGE = 3;
 
 const Page = async ({ searchParams }) => {
-  const response = await searchParams;
+  const response = searchParams;
   const searchText = response?.search || "";
   const currentPage = Number(response?.page) || 1;
   const skip = (currentPage - 1) * ITEMS_PER_PAGE;
