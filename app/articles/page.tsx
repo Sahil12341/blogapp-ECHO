@@ -9,22 +9,36 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { fetchArticleByQuery } from "@/lib/query/fetch-articles";
 import Link from "next/link";
 
-type SearchPageProps = {
-  searchParams?: Record<string, string | string[] | undefined>;
-};
+interface PageProps {
+  searchParams?: {
+    search?: string | string[];
+    page?: string | string[];
+  };
+}
 
-const ITEMS_PER_PAGE = 3; // Number of items per page
+const ITEMS_PER_PAGE = 3;
 
-const page: React.FC<SearchPageProps> = async ({ searchParams = {} }) => {
-  const rawSearch = searchParams.search;
-  const searchText = Array.isArray(rawSearch) ? rawSearch[0] ?? "" : rawSearch ?? "";
-  const currentPage = Number(searchParams.page) || 1;
+const page = async ({ searchParams }: PageProps) => {
+  // Handle potential string[] from URLSearchParams
+  const getString = (value: string | string[] | undefined): string => {
+    if (Array.isArray(value)) return value[0] || "";
+    return value || "";
+  };
+
+  const getPageNumber = (value: string | string[] | undefined): number => {
+    const pageStr = getString(value);
+    const parsed = parseInt(pageStr, 10);
+    return isNaN(parsed) ? 1 : parsed;
+  };
+
+  const searchText = getString(searchParams?.search);
+  const currentPage = getPageNumber(searchParams?.page);
+
   const skip = (currentPage - 1) * ITEMS_PER_PAGE;
   const take = ITEMS_PER_PAGE;
 
   const { articles, total } = await fetchArticleByQuery(searchText, skip, take);
   const totalPages = Math.ceil(total / ITEMS_PER_PAGE);
- 
 
   return (
     <div className="min-h-screen bg-background">
